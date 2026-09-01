@@ -1,17 +1,23 @@
-
 import logging
 import sqlite3
+import os
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
     CallbackQueryHandler,
+    MessageHandler,
     ContextTypes,
+    filters,
 )
 
 # =========================================================
 # SETTINGS
+# =========================================================
+
+# =========================================================
+# 🔐 BOT TOKEN — توکن جدید ربات را اینجا قرار بده
 # =========================================================
 
 TOKEN = "8835412515:AAFK5gmeDqWT1qSKEGu_InnI3YG2BOL0xRc"
@@ -26,8 +32,10 @@ SUPPORT_LINK = "https://t.me/OFF_voidrx"
 
 DATABASE = "bot.db"
 
-# پاداش هر زیرمجموعه
 REFERRAL_REWARD = 30000
+
+# قیمت نت سرور ملی
+NATIONAL_SERVER_PRICE_PER_GB = 50000
 
 
 # =========================================================
@@ -53,6 +61,7 @@ db = sqlite3.connect(
 
 cursor = db.cursor()
 
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
@@ -60,6 +69,7 @@ CREATE TABLE IF NOT EXISTS users (
     balance INTEGER DEFAULT 0
 )
 """)
+
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS orders (
@@ -76,6 +86,7 @@ CREATE TABLE IF NOT EXISTS orders (
 )
 """)
 
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS referrals (
     referred_id INTEGER PRIMARY KEY,
@@ -85,96 +96,83 @@ CREATE TABLE IF NOT EXISTS referrals (
 )
 """)
 
+
 db.commit()
 
 
 # =========================================================
 # PLANS
 # =========================================================
-# کد انتخابی هر طرح:
-#
-# 1  = 20GB
-# 2  = 40GB
-# 3  = 60GB
-# 4  = 80GB
-# 5  = 100GB
-# 6  = 200GB
-# 7  = 400GB
-# 8  = 600GB
-# 9  = 800GB
-# 10 = 1TB
-# =========================================================
 
 PLANS = {
-
     "1": {
         "name": "کانفیگ 20 گیگ",
         "volume": "20GB",
         "duration": "1 ماه",
-        "price": 60000,
+        "price": 1000000
     },
 
     "2": {
         "name": "کانفیگ 40 گیگ",
         "volume": "40GB",
         "duration": "1 ماه",
-        "price": 120000,
+        "price": 2000000
     },
 
     "3": {
         "name": "کانفیگ 60 گیگ",
         "volume": "60GB",
         "duration": "1 ماه",
-        "price": 180000,
+        "price": 3000000
     },
 
     "4": {
         "name": "کانفیگ 80 گیگ",
         "volume": "80GB",
         "duration": "1 ماه",
-        "price": 240000,
+        "price": 4000000
     },
 
     "5": {
         "name": "کانفیگ 100 گیگ",
         "volume": "100GB",
         "duration": "1 ماه",
-        "price": 300000,
+        "price": 5000000
     },
 
     "6": {
         "name": "کانفیگ 200 گیگ",
         "volume": "200GB",
         "duration": "3 ماه",
-        "price": 500000,
+        "price": 10000000
     },
 
     "7": {
         "name": "کانفیگ 400 گیگ",
         "volume": "400GB",
         "duration": "3 ماه",
-        "price": 1000000,
+        "price": 20000000
     },
 
     "8": {
         "name": "کانفیگ 600 گیگ",
         "volume": "600GB",
         "duration": "3 ماه",
-        "price": 1500000,
+        "price": 30000000
     },
 
     "9": {
         "name": "کانفیگ 800 گیگ",
         "volume": "800GB",
         "duration": "3 ماه",
-        "price": 2000000,
+        "price": 40000000
     },
 
     "10": {
         "name": "کانفیگ 1 ترابایت",
         "volume": "1TB",
         "duration": "3 ماه",
-        "price": 2500000,
+        "price": 50000000
     },
 }
 
@@ -236,7 +234,7 @@ def get_balance(user_id):
 
 
 # =========================================================
-# MEMBERSHIP
+# CHANNEL MEMBERSHIP
 # =========================================================
 
 async def check_membership(user_id, context):
@@ -263,10 +261,13 @@ async def check_membership(user_id, context):
         return False
 
 
+# =========================================================
+# BUTTONS
+# =========================================================
+
 def join_buttons():
 
     return InlineKeyboardMarkup([
-
         [
             InlineKeyboardButton(
                 "📢 عضویت در کانال",
@@ -280,13 +281,8 @@ def join_buttons():
                 callback_data="check_membership"
             )
         ]
-
     ])
 
-
-# =========================================================
-# MAIN MENU
-# =========================================================
 
 def main_buttons():
 
@@ -330,13 +326,16 @@ def main_buttons():
     ])
 
 
-# =========================================================
-# BUY MENU
-# =========================================================
-
 def buy_buttons():
 
     return InlineKeyboardMarkup([
+
+        [
+            InlineKeyboardButton(
+                "🇮🇷 نت سرور ملی | هر گیگ ۵۰,۰۰۰ تومان",
+                callback_data="national_server"
+            )
+        ],
 
         [
             InlineKeyboardButton(
@@ -362,45 +361,41 @@ def buy_buttons():
     ])
 
 
-# =========================================================
-# MONTHLY PLANS
-# =========================================================
-
 def monthly_buttons():
 
     return InlineKeyboardMarkup([
 
         [
             InlineKeyboardButton(
-                "1️⃣ 20GB | 60,000 تومان",
+                "1️⃣ 20GB | 1,000,000 تومان",
                 callback_data="plan_1"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "2️⃣ 40GB | 120,000 تومان",
+                "2️⃣ 40GB | 2,000,000 تومان",
                 callback_data="plan_2"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "3️⃣ 60GB | 180,000 تومان",
+                "3️⃣ 60GB | 3,000,000 تومان",
                 callback_data="plan_3"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "4️⃣ 80GB | 240,000 تومان",
+                "4️⃣ 80GB | 4,000,000 تومان",
                 callback_data="plan_4"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "5️⃣ 100GB | 300,000 تومان",
+                "5️⃣ 100GB | 5,000,000 تومان",
                 callback_data="plan_5"
             )
         ],
@@ -415,45 +410,41 @@ def monthly_buttons():
     ])
 
 
-# =========================================================
-# LARGE PLANS
-# =========================================================
-
 def large_buttons():
 
     return InlineKeyboardMarkup([
 
         [
             InlineKeyboardButton(
-                "6️⃣ 200GB | 500,000 تومان",
+                "6️⃣ 200GB | 10,000,000 تومان",
                 callback_data="plan_6"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "7️⃣ 400GB | 1,000,000 تومان",
+                "7️⃣ 400GB | 20,000,000 تومان",
                 callback_data="plan_7"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "8️⃣ 600GB | 1,500,000 تومان",
+                "8️⃣ 600GB | 30,000,000 تومان",
                 callback_data="plan_8"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "9️⃣ 800GB | 2,000,000 تومان",
+                "9️⃣ 800GB | 40,000,000 تومان",
                 callback_data="plan_9"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "🔟 1TB | 2,500,000 تومان",
+                "🔟 1TB | 50,000,000 تومان",
                 callback_data="plan_10"
             )
         ],
@@ -467,10 +458,6 @@ def large_buttons():
 
     ])
 
-
-# =========================================================
-# WALLET
-# =========================================================
 
 def wallet_buttons():
 
@@ -568,28 +555,26 @@ async def process_referral(
 
     db.commit()
 
-    new_balance = get_balance(referrer_id)
+    new_balance = get_balance(
+        referrer_id
+    )
 
     try:
 
         await context.bot.send_message(
-
             chat_id=referrer_id,
-
             text=(
-
                 "🎉 زیرمجموعه جدید!\n\n"
 
-                f"👤 کاربر: @{user.username or 'ندارد'}\n"
+                f"👤 کاربر: "
+                f"@{user.username or 'ندارد'}\n"
 
                 f"🎁 پاداش: "
                 f"{money(REFERRAL_REWARD)}\n"
 
                 f"💰 موجودی جدید: "
                 f"{money(new_balance)}"
-
             )
-
         )
 
     except Exception as e:
@@ -612,7 +597,6 @@ async def start(
 
     register_user(user)
 
-    # لینک زیرمجموعه
     if context.args:
 
         arg = context.args[0]
@@ -647,11 +631,13 @@ async def start(
 
         await update.message.reply_text(
 
-            "🔐 برای استفاده از ربات ابتدا باید عضو کانال شوید.\n\n"
+            "🔐 برای استفاده از ربات "
+            "ابتدا باید عضو کانال شوید.\n\n"
 
             f"📢 {CHANNEL_USERNAME}\n\n"
 
-            "بعد از عضویت روی «بررسی عضویت» بزنید.",
+            "بعد از عضویت روی "
+            "«بررسی عضویت» بزنید.",
 
             reply_markup=join_buttons()
         )
@@ -669,7 +655,156 @@ async def start(
 
 
 # =========================================================
-# CALLBACK
+# NATIONAL SERVER VOLUME
+# =========================================================
+
+async def national_server_volume(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not context.user_data.get(
+        "waiting_national_volume"
+    ):
+        return
+
+    user = update.effective_user
+
+    register_user(user)
+
+    text = update.message.text.strip()
+
+    try:
+
+        volume = int(text)
+
+    except ValueError:
+
+        await update.message.reply_text(
+            "❌ فقط عدد وارد کن.\n\n"
+            "مثال:\n"
+            "7"
+        )
+
+        return
+
+    if volume <= 0:
+
+        await update.message.reply_text(
+            "❌ حجم باید بیشتر از صفر باشد."
+        )
+
+        return
+
+    price = (
+        volume *
+        NATIONAL_SERVER_PRICE_PER_GB
+    )
+
+    context.user_data[
+        "national_volume"
+    ] = volume
+
+    context.user_data[
+        "national_price"
+    ] = price
+
+    context.user_data[
+        "waiting_national_volume"
+    ] = False
+
+    balance = get_balance(
+        user.id
+    )
+
+    # موجودی کافی نیست
+    if balance < price:
+
+        needed = price - balance
+
+        await update.message.reply_text(
+
+            "❌ موجودی کیف پول کافی نیست.\n\n"
+
+            "🇮🇷 نت سرور ملی\n"
+
+            f"📊 حجم: {volume}GB\n"
+
+            f"💵 هر گیگ: "
+            f"{money(NATIONAL_SERVER_PRICE_PER_GB)}\n"
+
+            f"💰 قیمت: "
+            f"{money(price)}\n\n"
+
+            f"💳 موجودی شما: "
+            f"{money(balance)}\n"
+
+            f"➕ کمبود: "
+            f"{money(needed)}",
+
+            reply_markup=InlineKeyboardMarkup([
+
+                [
+                    InlineKeyboardButton(
+                        "➕ شارژ کیف پول",
+                        url=SUPPORT_LINK
+                    )
+                ],
+
+                [
+                    InlineKeyboardButton(
+                        "🔙 برگشت",
+                        callback_data="buy"
+                    )
+                ]
+
+            ])
+        )
+
+        return
+
+    # تأیید خرید
+    await update.message.reply_text(
+
+        "🛒 تأیید خرید\n\n"
+
+        "🇮🇷 نت سرور ملی\n"
+
+        f"📊 حجم: {volume}GB\n"
+
+        f"💵 هر گیگ: "
+        f"{money(NATIONAL_SERVER_PRICE_PER_GB)}\n"
+
+        f"💰 قیمت نهایی: "
+        f"{money(price)}\n\n"
+
+        f"💳 موجودی شما: "
+        f"{money(balance)}\n\n"
+
+        "آیا خرید را تأیید می‌کنید؟",
+
+        reply_markup=InlineKeyboardMarkup([
+
+            [
+                InlineKeyboardButton(
+                    "✅ تأیید خرید",
+                    callback_data="national_confirm"
+                )
+            ],
+
+            [
+                InlineKeyboardButton(
+                    "🔙 برگشت",
+                    callback_data="buy"
+                )
+            ]
+
+        ])
+    )
+
+
+# =========================================================
+# CALLBACK HANDLER
 # =========================================================
 
 async def callback_handler(
@@ -727,6 +862,10 @@ async def callback_handler(
 
     if data == "home":
 
+        context.user_data[
+            "waiting_national_volume"
+        ] = False
+
         await query.edit_message_text(
 
             "🏠 منوی اصلی\n\n"
@@ -744,6 +883,10 @@ async def callback_handler(
 
     if data == "buy":
 
+        context.user_data[
+            "waiting_national_volume"
+        ] = False
+
         member = await check_membership(
             user_id,
             context
@@ -752,7 +895,9 @@ async def callback_handler(
         if not member:
 
             await query.edit_message_text(
+
                 "🔐 ابتدا عضو کانال شوید.",
+
                 reply_markup=join_buttons()
             )
 
@@ -760,9 +905,246 @@ async def callback_handler(
 
         await query.edit_message_text(
 
-            "🛒 نوع طرح را انتخاب کنید:",
+            "🛒 نوع سرویس را انتخاب کنید:",
 
             reply_markup=buy_buttons()
+        )
+
+        return
+
+
+    # =====================================================
+    # NATIONAL SERVER
+    # =====================================================
+
+    if data == "national_server":
+
+        context.user_data[
+            "waiting_national_volume"
+        ] = True
+
+        context.user_data.pop(
+            "national_volume",
+            None
+        )
+
+        context.user_data.pop(
+            "national_price",
+            None
+        )
+
+        await query.edit_message_text(
+
+            "🇮🇷 نت سرور ملی\n\n"
+
+            "📊 حجم موردنظر را "
+            "به گیگ وارد کنید.\n\n"
+
+            "مثلاً اگر 7 گیگ می‌خواهی، "
+            "فقط بنویس:\n\n"
+
+            "7\n\n"
+
+            "💵 قیمت هر 1 گیگ: "
+            "50,000 تومان"
+        )
+
+        return
+
+
+    # =====================================================
+    # NATIONAL CONFIRM
+    # =====================================================
+
+    if data == "national_confirm":
+
+        volume = context.user_data.get(
+            "national_volume"
+        )
+
+        price = context.user_data.get(
+            "national_price"
+        )
+
+        if not volume or not price:
+
+            await query.answer(
+                "❌ اطلاعات خرید پیدا نشد.",
+                show_alert=True
+            )
+
+            return
+
+        # کم کردن موجودی به شکل امن
+        cursor.execute(
+
+            """
+            UPDATE users
+            SET balance = balance - ?
+            WHERE user_id = ?
+            AND balance >= ?
+            """,
+
+            (
+                price,
+                user_id,
+                price
+            )
+        )
+
+        if cursor.rowcount != 1:
+
+            db.rollback()
+
+            await query.answer(
+                "❌ موجودی کافی نیست.",
+                show_alert=True
+            )
+
+            return
+
+
+        # ساخت سفارش
+        cursor.execute(
+
+            """
+            INSERT INTO orders
+            (
+                user_id,
+                username,
+                plan_id,
+                plan_name,
+                volume,
+                duration,
+                price,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+
+            (
+                user_id,
+                user.username or "ندارد",
+                "national",
+                "نت سرور ملی",
+                f"{volume}GB",
+                "طبق سرویس",
+                price,
+                "pending"
+            )
+        )
+
+        order_id = cursor.lastrowid
+
+        db.commit()
+
+
+        new_balance = get_balance(
+            user_id
+        )
+
+
+        # پاک کردن اطلاعات موقت
+        context.user_data.pop(
+            "national_volume",
+            None
+        )
+
+        context.user_data.pop(
+            "national_price",
+            None
+        )
+
+        context.user_data[
+            "waiting_national_volume"
+        ] = False
+
+
+        # اطلاع به ادمین
+        try:
+
+            await context.bot.send_message(
+
+                chat_id=ADMIN_ID,
+
+                text=(
+
+                    "🔔 سفارش جدید!\n\n"
+
+                    f"🆔 سفارش: #{order_id}\n"
+
+                    f"👤 کاربر: "
+                    f"@{user.username or 'ندارد'}\n"
+
+                    f"🔢 User ID: "
+                    f"{user_id}\n\n"
+
+                    "🇮🇷 نت سرور ملی\n"
+
+                    f"📊 حجم: "
+                    f"{volume}GB\n"
+
+                    f"💵 هر گیگ: "
+                    f"{money(NATIONAL_SERVER_PRICE_PER_GB)}\n"
+
+                    f"💰 مبلغ: "
+                    f"{money(price)}\n\n"
+
+                    "💳 پرداخت از کیف پول انجام شد.\n\n"
+
+                    "برای تحویل کد:\n"
+
+                    f"/setconfig "
+                    f"{order_id} CODE"
+                )
+            )
+
+        except Exception as e:
+
+            logger.error(
+                f"Admin notification error: {e}"
+            )
+
+
+        # پیام کاربر
+        await query.edit_message_text(
+
+            "✅ سفارش با موفقیت ثبت شد!\n\n"
+
+            f"🆔 شماره سفارش: "
+            f"#{order_id}\n"
+
+            "🇮🇷 نت سرور ملی\n"
+
+            f"📊 حجم: "
+            f"{volume}GB\n"
+
+            f"💰 مبلغ: "
+            f"{money(price)}\n\n"
+
+            f"💵 موجودی باقی‌مانده: "
+            f"{money(new_balance)}\n\n"
+
+            "⏳ کد کانفیگ پس از "
+            "آماده‌شدن برای شما ارسال می‌شود.",
+
+            reply_markup=InlineKeyboardMarkup([
+
+                [
+                    InlineKeyboardButton(
+                        "📦 سفارش‌های من",
+                        callback_data="orders"
+                    )
+                ],
+
+                [
+                    InlineKeyboardButton(
+                        "🏠 منوی اصلی",
+                        callback_data="home"
+                    )
+                ]
+
+            ])
         )
 
         return
@@ -777,7 +1159,7 @@ async def callback_handler(
         await query.edit_message_text(
 
             "📦 طرح‌های یک ماهه\n\n"
-            "شماره طرح را انتخاب کنید:",
+            "طرح موردنظر را انتخاب کنید:",
 
             reply_markup=monthly_buttons()
         )
@@ -794,7 +1176,7 @@ async def callback_handler(
         await query.edit_message_text(
 
             "🚀 طرح‌های سه ماهه\n\n"
-            "شماره طرح را انتخاب کنید:",
+            "طرح موردنظر را انتخاب کنید:",
 
             reply_markup=large_buttons()
         )
@@ -808,7 +1190,9 @@ async def callback_handler(
 
     if data == "wallet":
 
-        balance = get_balance(user_id)
+        balance = get_balance(
+            user_id
+        )
 
         await query.edit_message_text(
 
@@ -817,7 +1201,8 @@ async def callback_handler(
             f"💵 موجودی شما:\n"
             f"{money(balance)}\n\n"
 
-            "برای شارژ کیف پول با پشتیبانی تماس بگیرید.",
+            "برای شارژ کیف پول "
+            "با پشتیبانی تماس بگیرید.",
 
             reply_markup=wallet_buttons()
         )
@@ -834,31 +1219,42 @@ async def callback_handler(
         bot_username = context.bot.username
 
         referral_link = (
-            f"https://t.me/{bot_username}"
+            f"https://t.me/"
+            f"{bot_username}"
             f"?start=ref_{user_id}"
         )
 
+
         cursor.execute(
+
             """
             SELECT COUNT(*)
             FROM referrals
             WHERE referrer_id = ?
             """,
+
             (user_id,)
         )
 
         count = cursor.fetchone()[0]
 
+
         cursor.execute(
+
             """
-            SELECT COALESCE(SUM(reward), 0)
+            SELECT COALESCE(
+                SUM(reward),
+                0
+            )
             FROM referrals
             WHERE referrer_id = ?
             """,
+
             (user_id,)
         )
 
         total = cursor.fetchone()[0]
+
 
         await query.edit_message_text(
 
@@ -867,7 +1263,8 @@ async def callback_handler(
             f"🎁 پاداش هر نفر: "
             f"{money(REFERRAL_REWARD)}\n\n"
 
-            f"👤 تعداد زیرمجموعه: {count}\n"
+            f"👤 تعداد زیرمجموعه: "
+            f"{count}\n"
 
             f"💰 درآمد از زیرمجموعه‌ها: "
             f"{money(total)}\n\n"
@@ -876,7 +1273,8 @@ async def callback_handler(
 
             f"{referral_link}\n\n"
 
-            "این لینک را برای دوستان خود ارسال کنید.",
+            "این لینک را برای دوستان "
+            "خود ارسال کنید.",
 
             reply_markup=InlineKeyboardMarkup([
 
@@ -884,8 +1282,8 @@ async def callback_handler(
                     InlineKeyboardButton(
                         "📤 اشتراک لینک",
                         url=(
-                            "https://t.me/share/url?"
-                            f"url={referral_link}"
+                            "https://t.me/share/url"
+                            f"?url={referral_link}"
                         )
                     )
                 ],
@@ -910,6 +1308,7 @@ async def callback_handler(
     if data == "orders":
 
         cursor.execute(
+
             """
             SELECT
                 id,
@@ -924,10 +1323,12 @@ async def callback_handler(
             ORDER BY id DESC
             LIMIT 10
             """,
+
             (user_id,)
         )
 
         orders = cursor.fetchall()
+
 
         if not orders:
 
@@ -956,6 +1357,7 @@ async def callback_handler(
 
             return
 
+
         status_names = {
 
             "pending":
@@ -966,9 +1368,12 @@ async def callback_handler(
 
             "rejected":
                 "❌ رد شده"
+
         }
 
+
         text = "📦 سفارش‌های شما:\n\n"
+
 
         for order in orders:
 
@@ -982,16 +1387,24 @@ async def callback_handler(
                 config
             ) = order
 
+
             text += (
 
                 f"🆔 سفارش #{order_id}\n"
+
                 f"📦 {name}\n"
+
                 f"📊 حجم: {volume}\n"
+
                 f"⏱ مدت: {duration}\n"
-                f"💰 قیمت: {money(price)}\n"
+
+                f"💰 قیمت: "
+                f"{money(price)}\n"
+
                 f"📌 وضعیت: "
                 f"{status_names.get(status, status)}\n"
             )
+
 
             if config:
 
@@ -1000,7 +1413,11 @@ async def callback_handler(
                     f"{config}\n"
                 )
 
-            text += "\n────────────\n\n"
+
+            text += (
+                "\n────────────\n\n"
+            )
+
 
         await query.edit_message_text(
 
@@ -1022,7 +1439,7 @@ async def callback_handler(
 
 
     # =====================================================
-    # PLAN
+    # NORMAL PLAN
     # =====================================================
 
     if data.startswith("plan_"):
@@ -1031,6 +1448,7 @@ async def callback_handler(
             "_",
             1
         )[1]
+
 
         if plan_id not in PLANS:
 
@@ -1041,28 +1459,44 @@ async def callback_handler(
 
             return
 
+
         plan = PLANS[plan_id]
 
         price = plan["price"]
 
-        balance = get_balance(user_id)
+        balance = get_balance(
+            user_id
+        )
+
 
         if balance < price:
 
-            needed = price - balance
+            needed = (
+                price - balance
+            )
 
             await query.edit_message_text(
 
                 "❌ موجودی کیف پول کافی نیست.\n\n"
 
                 f"🔢 کد طرح: {plan_id}\n"
-                f"📦 {plan['name']}\n"
-                f"📊 حجم: {plan['volume']}\n"
-                f"⏱ مدت: {plan['duration']}\n"
-                f"💰 قیمت: {money(price)}\n\n"
 
-                f"💵 موجودی: {money(balance)}\n"
-                f"➕ کمبود: {money(needed)}",
+                f"📦 {plan['name']}\n"
+
+                f"📊 حجم: "
+                f"{plan['volume']}\n"
+
+                f"⏱ مدت: "
+                f"{plan['duration']}\n"
+
+                f"💰 قیمت: "
+                f"{money(price)}\n\n"
+
+                f"💵 موجودی: "
+                f"{money(balance)}\n"
+
+                f"➕ کمبود: "
+                f"{money(needed)}",
 
                 reply_markup=InlineKeyboardMarkup([
 
@@ -1085,17 +1519,26 @@ async def callback_handler(
 
             return
 
+
         await query.edit_message_text(
 
             "🛒 تأیید خرید\n\n"
 
             f"🔢 کد طرح: {plan_id}\n"
-            f"📦 {plan['name']}\n"
-            f"📊 حجم: {plan['volume']}\n"
-            f"⏱ مدت: {plan['duration']}\n"
-            f"💰 قیمت: {money(price)}\n\n"
 
-            f"💵 موجودی شما: {money(balance)}\n\n"
+            f"📦 {plan['name']}\n"
+
+            f"📊 حجم: "
+            f"{plan['volume']}\n"
+
+            f"⏱ مدت: "
+            f"{plan['duration']}\n"
+
+            f"💰 قیمت: "
+            f"{money(price)}\n\n"
+
+            f"💵 موجودی شما: "
+            f"{money(balance)}\n\n"
 
             "آیا خرید را تأیید می‌کنید؟",
 
@@ -1104,7 +1547,9 @@ async def callback_handler(
                 [
                     InlineKeyboardButton(
                         "✅ تأیید خرید",
-                        callback_data=f"buy_confirm_{plan_id}"
+                        callback_data=(
+                            f"buy_confirm_{plan_id}"
+                        )
                     )
                 ],
 
@@ -1122,7 +1567,7 @@ async def callback_handler(
 
 
     # =====================================================
-    # CONFIRM PURCHASE
+    # NORMAL PLAN CONFIRM
     # =====================================================
 
     if data.startswith("buy_confirm_"):
@@ -1132,27 +1577,32 @@ async def callback_handler(
             2
         )[2]
 
+
         if plan_id not in PLANS:
             return
+
 
         plan = PLANS[plan_id]
 
         price = plan["price"]
 
-        # تراکنش امن‌تر
+
         cursor.execute(
+
             """
             UPDATE users
             SET balance = balance - ?
             WHERE user_id = ?
             AND balance >= ?
             """,
+
             (
                 price,
                 user_id,
                 price
             )
         )
+
 
         if cursor.rowcount != 1:
 
@@ -1165,8 +1615,9 @@ async def callback_handler(
 
             return
 
-        # ثبت سفارش
+
         cursor.execute(
+
             """
             INSERT INTO orders
             (
@@ -1181,6 +1632,7 @@ async def callback_handler(
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
+
             (
                 user_id,
                 user.username or "ندارد",
@@ -1193,13 +1645,17 @@ async def callback_handler(
             )
         )
 
+
         order_id = cursor.lastrowid
 
         db.commit()
 
-        new_balance = get_balance(user_id)
 
-        # پیام به ادمین
+        new_balance = get_balance(
+            user_id
+        )
+
+
         try:
 
             await context.bot.send_message(
@@ -1215,22 +1671,30 @@ async def callback_handler(
                     f"👤 کاربر: "
                     f"@{user.username or 'ندارد'}\n"
 
-                    f"🔢 User ID: {user_id}\n\n"
+                    f"🔢 User ID: "
+                    f"{user_id}\n\n"
 
-                    f"🔢 کد طرح: {plan_id}\n"
+                    f"🔢 کد طرح: "
+                    f"{plan_id}\n"
+
                     f"📦 {plan['name']}\n"
-                    f"📊 حجم: {plan['volume']}\n"
-                    f"⏱ مدت: {plan['duration']}\n"
-                    f"💰 مبلغ: {money(price)}\n\n"
+
+                    f"📊 حجم: "
+                    f"{plan['volume']}\n"
+
+                    f"⏱ مدت: "
+                    f"{plan['duration']}\n"
+
+                    f"💰 مبلغ: "
+                    f"{money(price)}\n\n"
 
                     "💳 پرداخت از کیف پول انجام شد.\n\n"
 
                     "برای تحویل کد:\n"
 
-                    f"/setconfig {order_id} CODE"
-
+                    f"/setconfig "
+                    f"{order_id} CODE"
                 )
-
             )
 
         except Exception as e:
@@ -1239,23 +1703,33 @@ async def callback_handler(
                 f"Admin notification error: {e}"
             )
 
+
         await query.edit_message_text(
 
             "✅ سفارش با موفقیت ثبت شد!\n\n"
 
-            f"🆔 شماره سفارش: #{order_id}\n"
-            f"🔢 کد طرح: {plan_id}\n"
+            f"🆔 شماره سفارش: "
+            f"#{order_id}\n"
+
+            f"🔢 کد طرح: "
+            f"{plan_id}\n"
 
             f"📦 {plan['name']}\n"
-            f"📊 حجم: {plan['volume']}\n"
-            f"⏱ مدت: {plan['duration']}\n"
-            f"💰 مبلغ: {money(price)}\n\n"
+
+            f"📊 حجم: "
+            f"{plan['volume']}\n"
+
+            f"⏱ مدت: "
+            f"{plan['duration']}\n"
+
+            f"💰 مبلغ: "
+            f"{money(price)}\n\n"
 
             f"💵 موجودی باقی‌مانده: "
             f"{money(new_balance)}\n\n"
 
-            "⏳ کد کانفیگ پس از آماده‌شدن "
-            "برای شما ارسال می‌شود.",
+            "⏳ کد کانفیگ پس از "
+            "آماده‌شدن برای شما ارسال می‌شود.",
 
             reply_markup=InlineKeyboardMarkup([
 
@@ -1280,7 +1754,7 @@ async def callback_handler(
 
 
 # =========================================================
-# /balance
+# BALANCE COMMAND
 # =========================================================
 
 async def balance_command(
@@ -1292,20 +1766,23 @@ async def balance_command(
 
     register_user(user)
 
-    balance = get_balance(user.id)
+    balance = get_balance(
+        user.id
+    )
 
     await update.message.reply_text(
 
         "💰 کیف پول شما\n\n"
 
-        f"💵 موجودی: {money(balance)}",
+        f"💵 موجودی: "
+        f"{money(balance)}",
 
         reply_markup=wallet_buttons()
     )
 
 
 # =========================================================
-# /addbalance
+# ADD BALANCE
 # =========================================================
 
 async def add_balance(
@@ -1315,6 +1792,7 @@ async def add_balance(
 
     user = update.effective_user
 
+
     if user.id != ADMIN_ID:
 
         await update.message.reply_text(
@@ -1323,22 +1801,27 @@ async def add_balance(
 
         return
 
+
     if len(context.args) != 2:
 
         await update.message.reply_text(
 
             "فرمت صحیح:\n\n"
-
             "/addbalance USER_ID AMOUNT"
-
         )
 
         return
 
+
     try:
 
-        target_id = int(context.args[0])
-        amount = int(context.args[1])
+        target_id = int(
+            context.args[0]
+        )
+
+        amount = int(
+            context.args[1]
+        )
 
     except ValueError:
 
@@ -1348,6 +1831,7 @@ async def add_balance(
 
         return
 
+
     if amount <= 0:
 
         await update.message.reply_text(
@@ -1356,43 +1840,59 @@ async def add_balance(
 
         return
 
+
     cursor.execute(
+
         """
         INSERT OR IGNORE INTO users
         (user_id, username, balance)
         VALUES (?, ?, 0)
         """,
+
         (
             target_id,
             "unknown"
         )
     )
 
+
     cursor.execute(
+
         """
         UPDATE users
         SET balance = balance + ?
         WHERE user_id = ?
         """,
+
         (
             amount,
             target_id
         )
     )
 
+
     db.commit()
 
-    new_balance = get_balance(target_id)
+
+    new_balance = get_balance(
+        target_id
+    )
+
 
     await update.message.reply_text(
 
         "✅ موجودی اضافه شد.\n\n"
 
-        f"👤 User ID: {target_id}\n"
-        f"➕ مبلغ: {money(amount)}\n"
-        f"💰 موجودی جدید: {money(new_balance)}"
+        f"👤 User ID: "
+        f"{target_id}\n"
 
+        f"➕ مبلغ: "
+        f"{money(amount)}\n"
+
+        f"💰 موجودی جدید: "
+        f"{money(new_balance)}"
     )
+
 
     try:
 
@@ -1404,11 +1904,12 @@ async def add_balance(
 
                 "💰 کیف پول شما شارژ شد!\n\n"
 
-                f"➕ مبلغ: {money(amount)}\n"
-                f"💵 موجودی جدید: {money(new_balance)}"
+                f"➕ مبلغ: "
+                f"{money(amount)}\n"
 
+                f"💵 موجودی جدید: "
+                f"{money(new_balance)}"
             )
-
         )
 
     except Exception as e:
@@ -1419,7 +1920,7 @@ async def add_balance(
 
 
 # =========================================================
-# /removebalance
+# REMOVE BALANCE
 # =========================================================
 
 async def remove_balance(
@@ -1429,6 +1930,7 @@ async def remove_balance(
 
     user = update.effective_user
 
+
     if user.id != ADMIN_ID:
 
         await update.message.reply_text(
@@ -1436,6 +1938,7 @@ async def remove_balance(
         )
 
         return
+
 
     if len(context.args) != 2:
 
@@ -1445,10 +1948,16 @@ async def remove_balance(
 
         return
 
+
     try:
 
-        target_id = int(context.args[0])
-        amount = int(context.args[1])
+        target_id = int(
+            context.args[0]
+        )
+
+        amount = int(
+            context.args[1]
+        )
 
     except ValueError:
 
@@ -1458,6 +1967,7 @@ async def remove_balance(
 
         return
 
+
     if amount <= 0:
 
         await update.message.reply_text(
@@ -1466,7 +1976,11 @@ async def remove_balance(
 
         return
 
-    balance = get_balance(target_id)
+
+    balance = get_balance(
+        target_id
+    )
+
 
     if balance < amount:
 
@@ -1476,41 +1990,47 @@ async def remove_balance(
 
         return
 
+
     cursor.execute(
+
         """
         UPDATE users
         SET balance = balance - ?
         WHERE user_id = ?
         """,
+
         (
             amount,
             target_id
         )
     )
 
+
     db.commit()
 
-    new_balance = get_balance(target_id)
+
+    new_balance = get_balance(
+        target_id
+    )
+
 
     await update.message.reply_text(
 
         "✅ موجودی کم شد.\n\n"
 
-        f"👤 User ID: {target_id}\n"
-        f"➖ مبلغ: {money(amount)}\n"
-        f"💰 موجودی جدید: {money(new_balance)}"
+        f"👤 User ID: "
+        f"{target_id}\n"
 
+        f"➖ مبلغ: "
+        f"{money(amount)}\n"
+
+        f"💰 موجودی جدید: "
+        f"{money(new_balance)}"
     )
 
 
 # =========================================================
-# /setconfig
-# =========================================================
-# ادمین با این دستور کد سفارش را ثبت می‌کند:
-#
-# /setconfig 25 ABC-123-XYZ
-#
-# سپس کد خودکار برای خریدار ارسال می‌شود.
+# SET CONFIG
 # =========================================================
 
 async def set_config(
@@ -1520,6 +2040,7 @@ async def set_config(
 
     user = update.effective_user
 
+
     if user.id != ADMIN_ID:
 
         await update.message.reply_text(
@@ -1527,6 +2048,7 @@ async def set_config(
         )
 
         return
+
 
     if len(context.args) < 2:
 
@@ -1539,10 +2061,10 @@ async def set_config(
             "مثال:\n"
 
             "/setconfig 25 ABC-123-XYZ"
-
         )
 
         return
+
 
     try:
 
@@ -1558,11 +2080,14 @@ async def set_config(
 
         return
 
+
     config = " ".join(
         context.args[1:]
     ).strip()
 
+
     cursor.execute(
+
         """
         SELECT
             user_id,
@@ -1570,10 +2095,13 @@ async def set_config(
         FROM orders
         WHERE id = ?
         """,
+
         (order_id,)
     )
 
+
     order = cursor.fetchone()
+
 
     if not order:
 
@@ -1583,9 +2111,12 @@ async def set_config(
 
         return
 
+
     customer_id, plan_name = order
 
+
     cursor.execute(
+
         """
         UPDATE orders
         SET
@@ -1593,23 +2124,28 @@ async def set_config(
             status = 'approved'
         WHERE id = ?
         """,
+
         (
             config,
             order_id
         )
     )
 
+
     db.commit()
+
 
     await update.message.reply_text(
 
         "✅ کد ثبت شد.\n\n"
 
         f"🆔 سفارش: #{order_id}\n"
-        f"📦 {plan_name}\n"
-        f"🔑 کد:\n{config}"
 
+        f"📦 {plan_name}\n"
+
+        f"🔑 کد:\n{config}"
     )
+
 
     try:
 
@@ -1622,6 +2158,7 @@ async def set_config(
                 "🎉 کانفیگ شما آماده شد!\n\n"
 
                 f"🆔 سفارش: #{order_id}\n"
+
                 f"📦 {plan_name}\n\n"
 
                 "🔑 کد کانفیگ:\n"
@@ -1629,9 +2166,7 @@ async def set_config(
                 f"{config}\n\n"
 
                 "✅ وضعیت سفارش: تکمیل شده"
-
             )
-
         )
 
     except Exception as e:
@@ -1647,13 +2182,14 @@ async def set_config(
 
 def main():
 
-    if not TOKEN or TOKEN == "توکن_جدید_ربات":
+    if not TOKEN:
 
         print(
-            "❌ توکن جدید ربات را وارد کن."
+            "❌ BOT_TOKEN تنظیم نشده است."
         )
 
         return
+
 
     app = (
         Application
@@ -1661,6 +2197,7 @@ def main():
         .token(TOKEN)
         .build()
     )
+
 
     # Commands
 
@@ -1699,32 +2236,51 @@ def main():
         )
     )
 
+
+    # Text messages
+    # برای گرفتن حجم نت سرور ملی
+
+    app.add_handler(
+
+        MessageHandler(
+
+            filters.TEXT &
+            ~filters.COMMAND,
+
+            national_server_volume
+        )
+    )
+
+
     # Buttons
 
     app.add_handler(
+
         CallbackQueryHandler(
             callback_handler
         )
     )
 
-    print("==============================")
-    print("🤖 BOT IS RUNNING")
-    print("==============================")
+
     print(
-        f"📢 Channel: {CHANNEL_USERNAME}"
+        "🤖 BOT IS RUNNING"
     )
+
     print(
-        f"💬 Support: {SUPPORT_USERNAME}"
+
+        "🇮🇷 National Server: "
+
+        f"{money(NATIONAL_SERVER_PRICE_PER_GB)} "
+
+        "/ GB"
     )
-    print(
-        f"👥 Referral: "
-        f"{money(REFERRAL_REWARD)}"
-    )
-    print("==============================")
+
 
     app.run_polling()
 
 
+# =========================================================
+# RUN
 # =========================================================
 
 if __name__ == "__main__":
