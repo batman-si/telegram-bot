@@ -20,7 +20,7 @@ from telegram.ext import (
 # 🔐 BOT TOKEN — توکن جدید ربات را اینجا قرار بده
 # =========================================================
 
-TOKEN = "8835412515:AAFK5gmeDqWT1qSKEGu_InnI3YG2BOL0xRc"
+TOKEN = "8835412515:AAEbKx-WMv5c7pXRyr76s0ECNcnAezUQqPw"
 
 ADMIN_ID = 8855028648
 
@@ -109,70 +109,70 @@ PLANS = {
         "name": "کانفیگ 20 گیگ",
         "volume": "20GB",
         "duration": "1 ماه",
-        "price": 1000000
+        "price": 100000
     },
 
     "2": {
         "name": "کانفیگ 40 گیگ",
         "volume": "40GB",
         "duration": "1 ماه",
-        "price": 2000000
+        "price": 200000
     },
 
     "3": {
         "name": "کانفیگ 60 گیگ",
         "volume": "60GB",
         "duration": "1 ماه",
-        "price": 3000000
+        "price": 300000
     },
 
     "4": {
         "name": "کانفیگ 80 گیگ",
         "volume": "80GB",
         "duration": "1 ماه",
-        "price": 4000000
+        "price": 400000
     },
 
     "5": {
         "name": "کانفیگ 100 گیگ",
         "volume": "100GB",
         "duration": "1 ماه",
-        "price": 5000000
+        "price": 500000
     },
 
     "6": {
         "name": "کانفیگ 200 گیگ",
         "volume": "200GB",
         "duration": "3 ماه",
-        "price": 10000000
+        "price": 1000000
     },
 
     "7": {
         "name": "کانفیگ 400 گیگ",
         "volume": "400GB",
         "duration": "3 ماه",
-        "price": 20000000
+        "price": 2000000
     },
 
     "8": {
         "name": "کانفیگ 600 گیگ",
         "volume": "600GB",
         "duration": "3 ماه",
-        "price": 30000000
+        "price": 3000000
     },
 
     "9": {
         "name": "کانفیگ 800 گیگ",
         "volume": "800GB",
         "duration": "3 ماه",
-        "price": 40000000
+        "price": 4000000
     },
 
     "10": {
         "name": "کانفیگ 1 ترابایت",
         "volume": "1TB",
         "duration": "3 ماه",
-        "price": 50000000
+        "price": 5000000
     },
 }
 
@@ -332,7 +332,7 @@ def buy_buttons():
 
         [
             InlineKeyboardButton(
-                "🇮🇷 نت سرور ملی | هر گیگ ۵۰,۰۰۰ تومان",
+                "🇮🇷 نت سرور ملی | هر گیگ ۵۰۰,۰۰۰ ریال",
                 callback_data="national_server"
             )
         ],
@@ -367,35 +367,35 @@ def monthly_buttons():
 
         [
             InlineKeyboardButton(
-                "1️⃣ 20GB | 1,000,000 تومان",
+                "1️⃣ 20GB | 100000 تومان",
                 callback_data="plan_1"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "2️⃣ 40GB | 2,000,000 تومان",
+                "2️⃣ 40GB | 200000 تومان",
                 callback_data="plan_2"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "3️⃣ 60GB | 3,000,000 تومان",
+                "3️⃣ 60GB | 300000 تومان",
                 callback_data="plan_3"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "4️⃣ 80GB | 4,000,000 تومان",
+                "4️⃣ 80GB | 400000 تومان",
                 callback_data="plan_4"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "5️⃣ 100GB | 5,000,000 تومان",
+                "5️⃣ 100GB | 500000 تومان",
                 callback_data="plan_5"
             )
         ],
@@ -416,35 +416,35 @@ def large_buttons():
 
         [
             InlineKeyboardButton(
-                "6️⃣ 200GB | 10,000,000 تومان",
+                "6️⃣ 200GB | 1000000 تومان",
                 callback_data="plan_6"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "7️⃣ 400GB | 20,000,000 تومان",
+                "7️⃣ 400GB | 2000000 تومان",
                 callback_data="plan_7"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "8️⃣ 600GB | 30,000,000 تومان",
+                "8️⃣ 600GB | 3000000 تومان",
                 callback_data="plan_8"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "9️⃣ 800GB | 40,000,000 تومان",
+                "9️⃣ 800GB | 4000000 تومان",
                 callback_data="plan_9"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "🔟 1TB | 50,000,000 تومان",
+                "🔟 1TB | 5000000 تومان",
                 callback_data="plan_10"
             )
         ],
